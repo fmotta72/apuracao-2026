@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apuração 2º Turno 2026</title>
+<meta name="description" content="Acompanhamento da apuração do 2º turno da eleição presidencial de 2026, com projeção do resultado final.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: uma coluna de leitura; no topo a projeção (pizza) ao lado dos números nacionais,
+   depois a linha do tempo do apurado e, por fim, o avanço da apuração por região e por estado. */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --ink:#151714; --ink2:#4f544c; --ink3:#878c83; --rule:#e2e5df; --track:#eef0ec;
+  --c22:#2a78d6; --c13:#d63c3b; --seq:#2a78d6;
+  --c22l:#9cc3f2; --c13l:#f0a8a7; --vazio:#ffffff; --mapline:#d3d7cf;
+  --r1:#cde2fb; --r2:#86b6ef; --r3:#3987e5; --r4:#256abf; --r5:#0d366b;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161816; --panel:#1e211e; --ink:#f2f3f0; --ink2:#c2c6bd; --ink3:#8e938a; --rule:#323631; --track:#2a2d29;
+  --c22:#3987e5; --c13:#e66767; --seq:#3987e5;
+  --c22l:#284f7f; --c13l:#7d3b3b; --vazio:#e9ebe6; --mapline:#1e211e;
+  --r1:#1f3350; --r2:#184f95; --r3:#2a78d6; --r4:#5598e7; --r5:#9ec5f4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161816; --panel:#1e211e; --ink:#f2f3f0; --ink2:#c2c6bd; --ink3:#8e938a; --rule:#323631; --track:#2a2d29;
+  --c22:#3987e5; --c13:#e66767; --seq:#3987e5;
+  --c22l:#284f7f; --c13l:#7d3b3b; --vazio:#e9ebe6; --mapline:#1e211e;
+  --r1:#1f3350; --r2:#184f95; --r3:#2a78d6; --r4:#5598e7; --r5:#9ec5f4; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+main{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:24px 40px;display:flex;flex-direction:column;gap:16px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+h1{font:700 clamp(26px,4.4vw,38px)/1.08 var(--f-display);margin:6px 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;color:var(--ink2);font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--f-mono);padding:3px 9px;border-radius:999px;border:1px solid var(--rule);background:var(--panel)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.pill.ok i{background:#1baf7a}.pill.velho i{background:#eda100}.pill.erro i{background:#e34948}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;min-width:0}
+.panel h2{font:600 15px/1.3 var(--f-body);margin:0}
+.note{color:var(--ink3);font-size:13px;margin:2px 0 10px}
+.top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+.pie-wrap{display:grid;grid-template-columns:minmax(160px,230px) minmax(0,1fr);gap:18px;align-items:center}
+@media (max-width:440px){.pie-wrap{grid-template-columns:1fr}.pie-wrap svg{max-width:230px;margin:0 auto}}
+.cand{display:flex;flex-direction:column;gap:12px}
+.cand .row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:baseline}
+.cand .sw{width:12px;height:12px;border-radius:3px;align-self:center}
+.cand .nm{font-weight:600}
+.cand .pc{font:700 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.cand .sub{grid-column:2/4;color:var(--ink3);font-size:13px;margin-top:-6px}
+.verdict{margin-top:4px;padding-top:10px;border-top:1px solid var(--rule);color:var(--ink2);font-size:13.5px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.kpi span{display:block;color:var(--ink3);font-size:12.5px}
+.kpi b{display:block;font:700 26px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.kpi small{color:var(--ink3);font-size:12px}
+.prog{height:8px;background:var(--track);border-radius:4px;overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;background:var(--seq);border-radius:4px}
+svg{display:block;width:100%;height:auto}
+.ax{fill:var(--ink3);font:11px var(--f-mono);font-variant-numeric:tabular-nums}
+.grid line{stroke:var(--rule);stroke-width:1}
+.ln{fill:none;stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.lab{font:600 12.5px var(--f-body);fill:var(--ink)}
+.labv{font:500 12px var(--f-mono);fill:var(--ink2)}
+.ref{stroke:var(--ink3);stroke-dasharray:3 4;stroke-width:1}
+.xh{stroke:var(--ink3);stroke-width:1;stroke-dasharray:3 3}
+.dot{stroke:var(--panel);stroke-width:2}
+.reg{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:760px){.reg{grid-template-columns:1fr}}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:minmax(96px,132px) 1fr;gap:10px;align-items:center}
+.bar .l{font-size:14px;color:var(--ink2)} .bar .l small{display:block;color:var(--ink3);font-size:11.5px;line-height:1.1}
+.split{display:flex;height:22px;gap:2px;border-radius:4px;overflow:hidden;background:var(--track)}
+.split i{display:flex;align-items:center;font:600 12px var(--f-mono);color:#fff;font-style:normal;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.split i:first-child{padding-left:7px}.split i:last-child{justify-content:flex-end;padding-right:7px}
+.bar .ap{display:block;color:var(--ink3);font-size:11.5px;line-height:1.15}
+.mapa-wrap{min-width:0}
+#mapa{display:block;width:100%;height:auto;touch-action:manipulation}
+.bar.tot{border-top:1px solid var(--rule);padding-top:9px}
+.bar.tot .l{color:var(--ink);font-weight:600}
+.tile rect{stroke:var(--panel);stroke-width:2}
+.tile text{text-anchor:middle;font-variant-numeric:tabular-nums}
+.tile .u{font:600 13px var(--f-body)} .tile .p{font:500 11px var(--f-mono)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:11.5px;color:var(--ink2);margin-top:8px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px}
+.tw{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600}
+#tip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;
+  font:13px/1.45 var(--f-body);color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.14);z-index:5;min-width:160px}
+#tip .h{font:600 12px var(--f-mono);color:var(--ink2);margin-bottom:4px}
+#tip .r{display:flex;justify-content:space-between;gap:16px}
+#tip .r i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.vazio{color:var(--ink3);font-size:14px;padding:30px 0;text-align:center}
+.foot{color:var(--ink3);font-size:12.5px;max-width:78ch}
+:focus-visible{outline:2px solid var(--seq);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Presidente · 2º turno · 25/10/2026</div>
+    <h1>Apuração do 2º turno</h1>
+    <div class="status"><span class="pill" id="estado"><i></i><span>carregando…</span></span><span id="hora"></span></div>
+  </header>
+
+  <div class="top">
+    <section class="panel" aria-labelledby="t-proj">
+      <h2 id="t-proj">Projeção do resultado final</h2>
+      <p class="note">% dos votos válidos que cada candidato deve ter com 100% das urnas apuradas</p>
+      <div class="pie-wrap">
+        <svg id="pie" viewBox="-110 -110 220 220" role="img" aria-label="Gráfico de pizza com a projeção do resultado final"></svg>
+        <div class="cand" id="cands"></div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="t-nac">
+      <h2 id="t-nac">Brasil</h2>
+      <p class="note">Situação da apuração agora</p>
+      <div class="kpis" id="kpis"></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="t-linha">
+    <h2 id="t-linha">% dos votos válidos de cada candidato ao longo da apuração</h2>
+    <p class="note">Contagem oficial acumulada até cada momento (não é a projeção) · horário de Brasília</p>
+    <svg id="linha" role="img" aria-label="Linhas com o percentual de votos válidos de cada candidato ao longo da apuração"></svg>
+  </section>
+
+  <section class="panel" aria-labelledby="t-reg">
+    <h2 id="t-reg">Mapa e regiões</h2>
+    <p class="note">Cada município ganha a cor de quem está à frente nele assim que começa a ser apurado</p>
+    <div class="reg">
+      <div class="mapa-wrap"><canvas id="mapa" role="img" aria-label="Mapa dos municípios do Brasil coloridos pelo candidato à frente em cada um"></canvas><div class="leg" id="leg"></div></div>
+      <div class="bars" id="regioes"></div>
+    </div>
+    <details style="margin-top:14px">
+      <summary>Ver todos os estados</summary>
+      <div class="tw"><table id="tab"><thead></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+
+  <p class="foot">Projeção independente feita a partir dos arquivos públicos de resultado do TSE, município a município, usando o resultado de cada cidade no 1º turno e na eleição de 2022. Não é resultado oficial. A faixa indica a incerteza típica da projeção naquele ponto da apuração.</p>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+"use strict";
+// ---------- de onde vêm os dados ----------
+function fontes(){
+  const h = location.hostname, partes = location.pathname.split("/").filter(Boolean);
+  const lista = [];
+  if (h.endsWith(".github.io") && partes.length) {
+    const dono = h.replace(".github.io",""), repo = partes[0];
+    lista.push({url:`https://api.github.com/repos/${dono}/${repo}/contents/dados.json?ref=dados`, headers:{Accept:"application/vnd.github.raw+json"}});
+    lista.push({url:`https://raw.githubusercontent.com/${dono}/${repo}/dados/dados.json`});
+  }
+  lista.push({url:"dados.json"});
+  return lista;
+}
+const FONTES = fontes();
+const INTERVALO = 90000;
+
+// ---------- utilidades ----------
+const NS="http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!=null) e.textContent=text; if(parent) parent.appendChild(e); return e; }
+const pct = (v,c=1) => (v*100).toFixed(c).replace(".",",")+"%";
+const num = v => Math.round(v).toLocaleString("pt-BR");
+const cor = n => `var(--c${n})`;
+const mins = t => { const [h,m]=t.split(":").map(Number); return (h<12?h+24:h)*60+m; };
+const tip = document.getElementById("tip");
+function mostrarTip(html, x, y){ tip.innerHTML=html; tip.hidden=false; const r=tip.getBoundingClientRect();
+  tip.style.left=Math.min(x+14, innerWidth-r.width-8)+"px"; tip.style.top=Math.min(y+14, innerHeight-r.height-8)+"px"; }
+function esconderTip(){ tip.hidden=true; }
+
+let D = null;
+
+// ---------- pizza da projeção ----------
+function desenharPizza(){
+  const svg=document.getElementById("pie"); svg.replaceChildren();
+  const cs=D.candidatos;
+  const tot=cs.reduce((a,c)=>a+c.proj,0); const R=100;
+  if(!tot){ el("circle",{r:R,fill:"var(--track)"},svg); el("text",{y:5,"text-anchor":"middle",class:"ax"},svg,"aguardando votos");
+    svg.setAttribute("viewBox","-110 -112 220 224"); }
+  let a0=-Math.PI/2;
+  cs.forEach(c=>{
+    const f=c.proj/tot, a1=a0+f*2*Math.PI, big=f>0.5?1:0;
+    const p=`M0,0 L${R*Math.cos(a0)},${R*Math.sin(a0)} A${R},${R} 0 ${big} 1 ${R*Math.cos(a1)},${R*Math.sin(a1)} Z`;
+    const s=el("path",{d:p,fill:cor(c.n),stroke:"var(--panel)","stroke-width":2,tabindex:0},svg);
+    const t=`<div class="h">${c.nome}</div><div class="r"><span>Projeção</span><b>${pct(c.proj,2)}</b></div><div class="r"><span>Faixa</span><span>${pct(c.proj-D.faixa)} a ${pct(c.proj+D.faixa)}</span></div><div class="r"><span>Apurado agora</span><span>${pct(c.apurado,2)}</span></div>`;
+    s.addEventListener("pointermove",e=>mostrarTip(t,e.clientX,e.clientY)); s.addEventListener("pointerleave",esconderTip);
+    const am=(a0+a1)/2;
+    if (f>0.06) el("text",{x:R*0.58*Math.cos(am),y:R*0.58*Math.sin(am)+6,"text-anchor":"middle",fill:"#fff",style:"font:700 17px var(--f-display);pointer-events:none"},svg,pct(c.proj));
+    a0=a1;
+  });
+  // marca dos 50%
+  el("line",{x1:0,y1:R+2,x2:0,y2:R+9,stroke:"var(--ink2)","stroke-width":1.5},svg);
+  el("line",{x1:0,y1:-R-2,x2:0,y2:-R-9,stroke:"var(--ink2)","stroke-width":1.5},svg);
+  svg.setAttribute("viewBox","-110 -112 220 224");
+
+  const box=document.getElementById("cands"); box.replaceChildren();
+  [...cs].sort((a,b)=>b.proj-a.proj).forEach(c=>{ if(!tot) c={...c};
+    const d=document.createElement("div"); d.className="row";
+    d.innerHTML=`<i class="sw" style="background:${cor(c.n)}"></i><span class="nm"></span><span class="pc">${pct(c.proj)}</span><span class="sub">apurado agora: ${pct(c.apurado,2)}</span>`;
+    d.querySelector(".nm").textContent=c.nome; box.appendChild(d);
+  });
+  const [a,b]=[...cs].sort((x,y)=>y.proj-x.proj);
+  const dif=a.proj-b.proj, v=document.createElement("div"); v.className="verdict";
+  const pts = x => { const t=(x*100).toFixed(1).replace(".",","); return t+(t==="1,0"?" ponto":" pontos"); };
+  v.textContent = D.faixa==null ? "Aguardando os primeiros votos."
+    : dif > 2*D.faixa ? `${a.nome} à frente por ${pts(dif)}, além da faixa de incerteza (±${(D.faixa*100).toFixed(1).replace(".",",")}).`
+    : `Diferença de ${pts(dif)}, dentro da faixa de incerteza (±${(D.faixa*100).toFixed(1).replace(".",",")}). Ainda não dá para cravar.`;
+  box.appendChild(v);
+}
+
+// ---------- números nacionais ----------
+function desenharKpis(){
+  const n=D.nacional, k=document.getElementById("kpis");
+  k.innerHTML=`
+    <div class="kpi" style="grid-column:1/-1"><span>Votos apurados (estimativa do total)</span><b>${pct(n.pct_votos)}</b><div class="prog"><i style="width:${Math.min(100,n.pct_votos*100).toFixed(1)}%"></i></div></div>
+    <div class="kpi"><span>Seções apuradas (TSE)</span><b>${n.pct_secoes==null?"–":pct(n.pct_secoes)}</b></div>
+    <div class="kpi"><span>Votos válidos contados</span><b>${(n.votos_validos/1e6).toFixed(1).replace(".",",")} mi</b></div>
+    <div class="kpi"><span>Municípios com votos</span><b>${num(n.municipios)}</b><small>de ${num(n.municipios_total)}</small></div>
+    <div class="kpi"><span>Faixa de incerteza</span><b>${D.faixa==null?"–":"±"+(D.faixa*100).toFixed(1).replace(".",",")+" p.p."}</b></div>`;
+}
+
+// ---------- linha do apurado ----------
+function desenharLinha(){
+  const svg=document.getElementById("linha"); svg.replaceChildren();
+  const S=D.serie||[]; const cs=D.candidatos;
+  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?260:320, L=40, R=W<560?86:130, T=12, B=26;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  if (S.length<2){ el("text",{x:W/2,y:H/2,"text-anchor":"middle",class:"ax"},svg,"A linha aparece a partir da segunda atualização."); return; }
+  const x0=mins(S[0].t), x1=Math.max(mins(S[S.length-1].t), x0+10);
+  let lo=100, hi=0; S.forEach(o=>cs.forEach(c=>{const v=o.c[c.n]*100; if(v<lo)lo=v; if(v>hi)hi=v;}));
+  let y0=Math.max(0,Math.floor(Math.min(lo,45)/5)*5), y1=Math.min(100,Math.ceil(Math.max(hi,55)/5)*5);
+  const X=t=>L+(mins(t)-x0)/(x1-x0)*(W-L-R), Y=v=>T+(1-(v*100-y0)/(y1-y0))*(H-T-B);
+  const g=el("g",{class:"grid"},svg);
+  for(let v=y0; v<=y1; v+=5){ el("line",{x1:L,x2:W-R,y1:Y(v/100),y2:Y(v/100)},g); el("text",{x:L-8,y:Y(v/100)+4,"text-anchor":"end",class:"ax"},svg,v+"%"); }
+  el("line",{x1:L,x2:W-R,y1:Y(.5),y2:Y(.5),class:"ref"},svg);
+  const passo = (x1-x0)>240?60:(W<560?60:30);
+  for(let m=Math.ceil(x0/passo)*passo; m<=x1; m+=passo){ const t=`${String(Math.floor(m/60)%24).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`; el("text",{x:X(t),y:H-6,"text-anchor":"middle",class:"ax"},svg,t); }
+  cs.forEach(c=>el("polyline",{class:"ln",stroke:cor(c.n),points:S.map(o=>`${X(o.t).toFixed(1)},${Y(o.c[c.n]).toFixed(1)}`).join(" ")},svg));
+  const last=S[S.length-1];
+  const ends=cs.map(c=>({c,y:Y(last.c[c.n])})).sort((a,b)=>a.y-b.y); let prev=-1e9;
+  ends.forEach(e=>{ e.ly=Math.max(e.y,prev+30); prev=e.ly;
+    el("circle",{cx:X(last.t),cy:e.y,r:4,fill:cor(e.c.n),class:"dot"},svg);
+    el("text",{x:W-R+10,y:e.ly-1,class:"lab"},svg,W<560?e.c.nome.split(" ")[0]:e.c.nome);
+    el("text",{x:W-R+10,y:e.ly+14,class:"labv"},svg,pct(last.c[e.c.n],2)); });
+  // hover
+  const xh=el("line",{class:"xh",y1:T,y2:H-B,x1:0,x2:0,visibility:"hidden"},svg);
+  const dots=cs.map(c=>el("circle",{r:4,fill:cor(c.n),class:"dot",visibility:"hidden"},svg));
+  const hit=el("rect",{x:L,y:T,width:W-L-R,height:H-T-B,fill:"transparent"},svg);
+  function mv(ev){ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; const q=p.matrixTransform(svg.getScreenCTM().inverse());
+    let i=0,b=1e9; S.forEach((o,j)=>{const d=Math.abs(X(o.t)-q.x); if(d<b){b=d;i=j;}}); const o=S[i], x=X(o.t);
+    xh.setAttribute("x1",x); xh.setAttribute("x2",x); xh.setAttribute("visibility","visible");
+    dots.forEach((d,k)=>{d.setAttribute("cx",x); d.setAttribute("cy",Y(o.c[cs[k].n])); d.setAttribute("visibility","visible");});
+    mostrarTip(`<div class="h">${o.t} · ${pct(o.pct)} apurado</div>`+cs.map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(o.c[c.n],2)}</b></div>`).join(""),ev.clientX,ev.clientY); }
+  hit.addEventListener("pointermove",mv); hit.addEventListener("pointerdown",mv);
+  hit.addEventListener("pointerleave",()=>{esconderTip(); xh.setAttribute("visibility","hidden"); dots.forEach(d=>d.setAttribute("visibility","hidden"));});
+}
+
+// ---------- regiões ----------
+function lados(){ // Lula à esquerda (vermelho), Flávio à direita (azul)
+  const cs=D.candidatos; const e=cs.find(c=>c.n==="13")||cs[0], d=cs.find(c=>c!==e)||cs[1];
+  return [e,d];
+}
+function barraDividida(c, ap, nome, total){
+  const [e,d]=lados(); const pe=c[e.n]||0, pd=c[d.n]||0, s=(pe+pd)||1;
+  const row=document.createElement("div"); row.className="bar"+(total?" tot":"");
+  const l=document.createElement("div"); l.className="l"; l.textContent=nome;
+  const sm=document.createElement("small"); sm.className="ap"; sm.textContent=`${pct(ap,0)} apurado`; l.appendChild(sm);
+  const sp=document.createElement("div"); sp.className="split";
+  if (pe+pd>0) sp.innerHTML=`<i style="width:${(pe/s*100).toFixed(2)}%;background:${cor(e.n)}">${pct(pe)}</i><i style="width:${(pd/s*100).toFixed(2)}%;background:${cor(d.n)}">${pct(pd)}</i>`;
+  row.append(l, sp); return row;
+}
+function desenharRegioes(){
+  const box=document.getElementById("regioes"); box.replaceChildren();
+  const [e,d]=lados();
+  const cab=document.createElement("div"); cab.className="leg"; cab.style.justifyContent="space-between"; cab.style.marginTop="0";
+  cab.innerHTML=`<span><i style="background:${cor(e.n)}"></i></span><span><i style="background:${cor(d.n)}"></i></span>`;
+  cab.children[0].append(e.nome); cab.children[1].append(d.nome); box.appendChild(cab);
+  D.regioes.forEach(r=>box.appendChild(barraDividida(r.c||{}, r.pct, r.nome, false)));
+  const nac={}; D.candidatos.forEach(c=>nac[c.n]=c.apurado);
+  box.appendChild(barraDividida(nac, D.nacional.pct_votos, "Brasil", true));
+  const tab=document.getElementById("tab");
+  tab.querySelector("thead").innerHTML=`<tr><th>Estado</th><th>Apurado</th>${D.candidatos.map(c=>`<th>${c.nome.split(" ")[0]}</th>`).join("")}</tr>`;
+  tab.querySelector("tbody").innerHTML=[...D.ufs].sort((a,b)=>a.uf.localeCompare(b.uf)).map(u=>`<tr><td>${u.uf}</td><td>${pct(u.pct)}</td>${D.candidatos.map(c=>`<td>${pct(u.c[c.n]||0)}</td>`).join("")}</tr>`).join("");
+}
+
+// ---------- mapa dos municípios ----------
+let GEO=null, PATHS=null, PICK=null, CHAVES=null;
+async function carregarMapa(){
+  try{ const r=await fetch("municipios.json"); if(!r.ok) return; GEO=await r.json(); }catch(e){ return; }
+  PATHS={}; CHAVES=Object.keys(GEO.m);
+  for(const k of CHAVES){ const p=new Path2D();
+    for(const e of GEO.m[k]){ let x=e[0], y=e[1]; p.moveTo(x,y); for(let i=2;i<e.length;i+=2){ x+=e[i]; y+=e[i+1]; p.lineTo(x,y); } p.closePath(); }
+    PATHS[k]=p; }
+  desenharMapa();
+}
+function tok(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function corMun(v){
+  // v = [pst×1000, cand1×1000, cand2×1000] na ordem de D.mun_cands
+  if(!D) return null; const cs=D.mun_cands||[]; if(!v||cs.length<2) return null;
+  const a=v[1], b=v[2]; if(a+b<=0) return null;
+  const lider = a>=b ? cs[0] : cs[1], forte = Math.abs(a-b) >= 100;
+  return tok(forte ? `--c${lider}` : `--c${lider}l`);
+}
+function desenharMapa(){
+  const cv=document.getElementById("mapa"); if(!GEO||!cv) return;
+  const W=Math.max(280, cv.parentElement.clientWidth), H=Math.round(W*GEO.h/GEO.w), dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+"px";
+  const ctx=cv.getContext("2d"); const s=W/GEO.w*dpr;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.setTransform(s,0,0,s,0,0);
+  const vazio=tok("--vazio"), linha=tok("--mapline"), M=(D&&D.mun)||{};
+  ctx.lineWidth=0.5/s*dpr; ctx.strokeStyle=linha; ctx.lineJoin="round";
+  for(const k of CHAVES){ const c=corMun(M[k]); ctx.fillStyle=c||vazio; ctx.fill(PATHS[k]); ctx.stroke(PATHS[k]); }
+  // camada de identificação para o passar do mouse
+  PICK=document.createElement("canvas"); PICK.width=Math.round(W); PICK.height=Math.round(H);
+  const pc=PICK.getContext("2d"); pc.imageSmoothingEnabled=false; const s1=W/GEO.w; pc.setTransform(s1,0,0,s1,0,0);
+  CHAVES.forEach((k,i)=>{ const id=i+1; pc.fillStyle=`rgb(${id&255},${(id>>8)&255},${(id>>16)&255})`; pc.fill(PATHS[k]); });
+  const cs=D?D.candidatos:[]; const [e,d]=D?lados():[null,null];
+  if (e&&d) document.getElementById("leg").innerHTML=
+    `<span><i style="background:var(--c${e.n})"></i>${e.nome}, mais de 10 pontos</span><span><i style="background:var(--c${e.n}l)"></i>${e.nome}, até 10 pontos</span>`+
+    `<span><i style="background:var(--c${d.n}l)"></i>${d.nome}, até 10 pontos</span><span><i style="background:var(--c${d.n})"></i>${d.nome}, mais de 10 pontos</span>`+
+    `<span><i style="background:var(--vazio);box-shadow:inset 0 0 0 1px var(--rule)"></i>sem votos ainda</span>`;
+}
+(function(){
+  const cv=document.getElementById("mapa");
+  function mv(ev){
+    if(!PICK||!D) return; const r=cv.getBoundingClientRect(); const x=Math.floor(ev.clientX-r.left), y=Math.floor(ev.clientY-r.top);
+    const px=PICK.getContext("2d").getImageData(x,y,1,1).data; const id=px[0]+(px[1]<<8)+(px[2]<<16);
+    if(!id||id>CHAVES.length||px[3]<255){ esconderTip(); return; }
+    const k=CHAVES[id-1], v=(D.mun||{})[k], nome=(GEO.n&&GEO.n[k])||k;
+    const cs=D.mun_cands||[], nm=n=>(D.candidatos.find(c=>c.n===n)||{nome:n}).nome;
+    let h=`<div class="h"></div>`;
+    h += v ? `<div class="r"><span>Seções apuradas</span><b>${(v[0]/10).toFixed(0)}%</b></div>`+cs.map((n,i)=>`<div class="r"><span><i style="background:${cor(n)}"></i>${nm(n)}</span><b>${(v[i+1]/10).toFixed(1).replace(".",",")}%</b></div>`).join("")
+           : `<div class="r"><span>Ainda sem votos</span></div>`;
+    mostrarTip(h, ev.clientX, ev.clientY); tip.querySelector(".h").textContent=`${nome} (${k.slice(0,2)})`;
+  }
+  cv.addEventListener("pointermove",mv); cv.addEventListener("pointerdown",mv); cv.addEventListener("pointerleave",esconderTip);
+})();
+
+function desenhar(){
+  if(!D) return;
+  document.getElementById("hora").textContent = `Atualizado às ${D.atualizado} · a página se atualiza sozinha`;
+  desenharPizza(); desenharKpis(); desenharLinha(); desenharRegioes(); desenharMapa();
+}
+
+// ---------- busca ----------
+async function buscar(){
+  const st=document.getElementById("estado");
+  for(const f of FONTES){
+    try{
+      const r=await fetch(f.url+(f.url.includes("?")?"&":"?")+"t="+Date.now(),{headers:f.headers||{},cache:"no-store"});
+      if(!r.ok) continue;
+      const novo=await r.json(); D=novo; desenhar();
+      const idade=(Date.now()-new Date(novo.gerado_em).getTime())/60000;
+      st.className="pill "+(idade>10?"velho":"ok");
+      st.querySelector("span").textContent = idade>10 ? `sem novidades há ${Math.round(idade)} min` : "ao vivo";
+      return;
+    }catch(e){}
+  }
+  st.className="pill erro"; st.querySelector("span").textContent="sem conexão com os dados";
+}
+buscar(); setInterval(buscar, INTERVALO);
+carregarMapa();
+let rz; addEventListener("resize",()=>{clearTimeout(rz); rz=setTimeout(desenhar,150);});
+</script>
+</body>
+</html>

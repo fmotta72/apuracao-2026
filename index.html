@@ -44,18 +44,18 @@ h1{font:700 clamp(26px,4.4vw,38px)/1.08 var(--f-display);margin:6px 0 4px;letter
 .panel h2{font:600 15px/1.3 var(--f-body);margin:0 0 10px}
 .panel h2 + .note{margin-top:-8px}
 .note{color:var(--ink3);font-size:13px;margin:2px 0 10px}
-.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,320px);gap:16px;align-items:stretch}
+.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:16px;align-items:stretch}
 @media (max-width:760px){.top{grid-template-columns:1fr}.top .proj{order:-1}}
-.pie-wrap{display:flex;flex-direction:column;gap:16px}
-.pie-wrap svg{max-width:250px;margin:8px auto 4px}
+.pie-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:calc(100% - 34px)}
+.pie-wrap svg{width:100%;max-width:290px;margin:0 auto}
 .status b{color:var(--ink);font-variant-numeric:tabular-nums}
 .cand{display:flex;flex-direction:column;gap:12px}
 .cand .row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:baseline}
 .cand .sw{width:12px;height:12px;border-radius:3px;align-self:center}
-.cand .nm{font-weight:600}
-.cand .pc{font:700 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.cand .nm{font-weight:600;white-space:nowrap}
+.cand .pc{font:700 clamp(26px,2.6vw,36px)/1 var(--f-display);font-variant-numeric:tabular-nums}
 .cand .sub{grid-column:2/4;color:var(--ink3);font-size:13px;margin-top:-6px}
-.verdict{margin-top:4px;padding-top:10px;border-top:1px solid var(--rule);color:var(--ink2);font-size:13.5px}
+.verdict{color:var(--ink3);font-size:13px;text-align:center}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
 .kpi span{display:block;color:var(--ink3);font-size:12.5px}
 .kpi b{display:block;font:700 26px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -78,8 +78,11 @@ svg{display:block;width:100%;height:auto}
 .ufs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 22px}
 @media (max-width:420px){.ufs{grid-template-columns:1fr}}
 .uf{display:grid;grid-template-columns:34px 36px 1fr;gap:8px;align-items:center;font-size:13px}
+.ufs{row-gap:5px}
 .uf b{font-weight:600}.uf span{color:var(--ink3);font:11.5px var(--f-mono);text-align:right}
-.uf .split{height:14px;gap:1px}
+.uf .split{height:18px;gap:1px}
+.uf .split i{font-size:10.5px}
+.uf .split i:first-child{padding-left:5px}.uf .split i:last-child{padding-right:5px}
 @media (max-width:760px){.reg{grid-template-columns:1fr}}
 .bars{display:flex;flex-direction:column;gap:9px}
 .bar{display:grid;grid-template-columns:minmax(96px,132px) 1fr;gap:10px;align-items:center}
@@ -198,7 +201,11 @@ function desenharPizza(){
     const t=`<div class="h">${c.nome}</div><div class="r"><span>Projeção</span><b>${pct(c.proj,2)}</b></div><div class="r"><span>Faixa</span><span>${pct(c.proj-D.faixa)} a ${pct(c.proj+D.faixa)}</span></div><div class="r"><span>Apurado agora</span><span>${pct(c.apurado,2)}</span></div>`;
     s.addEventListener("pointermove",e=>mostrarTip(t,e.clientX,e.clientY)); s.addEventListener("pointerleave",esconderTip);
     const am=(a0+a1)/2;
-    if (f>0.06) el("text",{x:R*0.58*Math.cos(am),y:R*0.58*Math.sin(am)+6,"text-anchor":"middle",fill:"#fff",style:"font:700 17px var(--f-display);pointer-events:none"},svg,pct(c.proj));
+    if (f>0.08) {
+      const cx=R*0.52*Math.cos(am), cy=R*0.52*Math.sin(am);
+      el("text",{x:cx,y:cy-4,"text-anchor":"middle",fill:"#fff",style:"font:600 11px var(--f-body);pointer-events:none"},svg,c.nome.split(" ")[0]);
+      el("text",{x:cx,y:cy+15,"text-anchor":"middle",fill:"#fff",style:"font:700 19px var(--f-display);pointer-events:none"},svg,pct(c.proj));
+    }
     a0=a1;
   });
   // marca dos 50%
@@ -207,11 +214,6 @@ function desenharPizza(){
   svg.setAttribute("viewBox","-110 -112 220 224");
 
   const box=document.getElementById("cands"); box.replaceChildren();
-  [...cs].sort((a,b)=>b.proj-a.proj).forEach(c=>{ if(!tot) c={...c};
-    const d=document.createElement("div"); d.className="row";
-    d.innerHTML=`<i class="sw" style="background:${cor(c.n)}"></i><span class="nm"></span><span class="pc">${pct(c.proj)}</span>`;
-    d.querySelector(".nm").textContent=c.nome; box.appendChild(d);
-  });
   const [a,b]=[...cs].sort((x,y)=>y.proj-x.proj);
   const dif=a.proj-b.proj, v=document.createElement("div"); v.className="verdict";
   v.textContent = D.faixa==null ? "Aguardando os primeiros votos."
@@ -230,7 +232,7 @@ function desenharStatus(){
 function desenharLinha(){
   const svg=document.getElementById("linha"); svg.replaceChildren();
   const S=D.serie||[]; const cs=D.candidatos;
-  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?260:Math.round(Math.min(460,Math.max(360,W*0.42))), L=40, R=W<560?86:130, T=12, B=26;
+  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?240:Math.round(Math.min(340,Math.max(260,W*0.4))), L=40, R=W<560?86:130, T=12, B=26;
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   if (S.length<2){ el("text",{x:W/2,y:H/2,"text-anchor":"middle",class:"ax"},svg,"A linha aparece a partir da segunda atualização."); return; }
   const x0=mins(S[0].t), x1=Math.max(mins(S[S.length-1].t), x0+10);
@@ -290,7 +292,7 @@ function desenharRegioes(){
     const pe=u.c[e.n]||0, pd=u.c[d.n]||0, t=(pe+pd)||1;
     const r=document.createElement("div"); r.className="uf"; r.tabIndex=0;
     const sig = u.uf==="ZZ" ? "Ext." : u.uf;
-    r.innerHTML=`<b>${sig}</b><span>${pct(u.pct,0)}</span><div class="split">${pe+pd>0?`<i style="width:${(pe/t*100).toFixed(2)}%;background:${cor(e.n)}"></i><i style="width:${(pd/t*100).toFixed(2)}%;background:${cor(d.n)}"></i>`:""}</div>`;
+    r.innerHTML=`<b>${sig}</b><span>${pct(u.pct,0)}</span><div class="split">${pe+pd>0?`<i style="width:${(pe/t*100).toFixed(2)}%;background:${cor(e.n)}">${pe/t>=0.17?pct(pe/t):""}</i><i style="width:${(pd/t*100).toFixed(2)}%;background:${cor(d.n)}">${pd/t>=0.17?pct(pd/t):""}</i>`:""}</div>`;
     const h=`<div class="h">${u.uf==="ZZ"?"Exterior":u.uf} · ${pct(u.pct)} apurado</div>`+[e,d].map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(u.c[c.n]||0)}</b></div>`).join("");
     r.addEventListener("pointermove",ev=>mostrarTip(h,ev.clientX,ev.clientY)); r.addEventListener("pointerleave",esconderTip);
     box2.appendChild(r);

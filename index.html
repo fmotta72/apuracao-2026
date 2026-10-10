@@ -33,7 +33,7 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
-main{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:24px 40px;display:flex;flex-direction:column;gap:16px}
+main{max-width:1560px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:24px 40px;display:flex;flex-direction:column;gap:16px}
 .eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
 h1{font:700 clamp(26px,4.4vw,38px)/1.08 var(--f-display);margin:6px 0 4px;letter-spacing:-.01em;text-wrap:balance}
 .status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;color:var(--ink2);font-size:14px}
@@ -41,12 +41,14 @@ h1{font:700 clamp(26px,4.4vw,38px)/1.08 var(--f-display);margin:6px 0 4px;letter
 .pill i{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
 .pill.ok i{background:#1baf7a}.pill.velho i{background:#eda100}.pill.erro i{background:#e34948}
 .panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;min-width:0}
-.panel h2{font:600 15px/1.3 var(--f-body);margin:0}
+.panel h2{font:600 15px/1.3 var(--f-body);margin:0 0 10px}
+.panel h2 + .note{margin-top:-8px}
 .note{color:var(--ink3);font-size:13px;margin:2px 0 10px}
-.top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
-@media (max-width:760px){.top{grid-template-columns:1fr}}
-.pie-wrap{display:grid;grid-template-columns:minmax(160px,230px) minmax(0,1fr);gap:18px;align-items:center}
-@media (max-width:440px){.pie-wrap{grid-template-columns:1fr}.pie-wrap svg{max-width:230px;margin:0 auto}}
+.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,320px);gap:16px;align-items:stretch}
+@media (max-width:760px){.top{grid-template-columns:1fr}.top .proj{order:-1}}
+.pie-wrap{display:flex;flex-direction:column;gap:16px}
+.pie-wrap svg{max-width:250px;margin:8px auto 4px}
+.status b{color:var(--ink);font-variant-numeric:tabular-nums}
 .cand{display:flex;flex-direction:column;gap:12px}
 .cand .row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:baseline}
 .cand .sw{width:12px;height:12px;border-radius:3px;align-self:center}
@@ -69,7 +71,15 @@ svg{display:block;width:100%;height:auto}
 .ref{stroke:var(--ink3);stroke-dasharray:3 4;stroke-width:1}
 .xh{stroke:var(--ink3);stroke-width:1;stroke-dasharray:3 3}
 .dot{stroke:var(--panel);stroke-width:2}
-.reg{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+.reg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
+.mapa-wrap{max-width:720px;width:100%;justify-self:center}
+.lado{min-width:0}
+.sub3{font:600 13px var(--f-body);color:var(--ink2);margin:20px 0 8px;padding-top:12px;border-top:1px solid var(--rule)}
+.ufs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 22px}
+@media (max-width:420px){.ufs{grid-template-columns:1fr}}
+.uf{display:grid;grid-template-columns:34px 36px 1fr;gap:8px;align-items:center;font-size:13px}
+.uf b{font-weight:600}.uf span{color:var(--ink3);font:11.5px var(--f-mono);text-align:right}
+.uf .split{height:14px;gap:1px}
 @media (max-width:760px){.reg{grid-template-columns:1fr}}
 .bars{display:flex;flex-direction:column;gap:9px}
 .bar{display:grid;grid-template-columns:minmax(96px,132px) 1fr;gap:10px;align-items:center}
@@ -112,38 +122,30 @@ th{color:var(--ink2);font-weight:600}
   </header>
 
   <div class="top">
-    <section class="panel" aria-labelledby="t-proj">
+    <section class="panel" aria-labelledby="t-linha">
+      <h2 id="t-linha">% dos votos válidos de cada candidato ao longo da apuração</h2>
+      <p class="note">Contagem oficial acumulada até cada momento (não é a projeção) · horário de Brasília</p>
+      <svg id="linha" role="img" aria-label="Linhas com o percentual de votos válidos de cada candidato ao longo da apuração"></svg>
+    </section>
+    <section class="panel proj" aria-labelledby="t-proj">
       <h2 id="t-proj">Projeção do resultado final</h2>
-      <p class="note">% dos votos válidos que cada candidato deve ter com 100% das urnas apuradas</p>
       <div class="pie-wrap">
         <svg id="pie" viewBox="-110 -110 220 220" role="img" aria-label="Gráfico de pizza com a projeção do resultado final"></svg>
         <div class="cand" id="cands"></div>
       </div>
     </section>
-    <section class="panel" aria-labelledby="t-nac">
-      <h2 id="t-nac">Brasil</h2>
-      <p class="note">Situação da apuração agora</p>
-      <div class="kpis" id="kpis"></div>
-    </section>
   </div>
-
-  <section class="panel" aria-labelledby="t-linha">
-    <h2 id="t-linha">% dos votos válidos de cada candidato ao longo da apuração</h2>
-    <p class="note">Contagem oficial acumulada até cada momento (não é a projeção) · horário de Brasília</p>
-    <svg id="linha" role="img" aria-label="Linhas com o percentual de votos válidos de cada candidato ao longo da apuração"></svg>
-  </section>
 
   <section class="panel" aria-labelledby="t-reg">
     <h2 id="t-reg">Mapa e regiões</h2>
-    <p class="note">Cada município ganha a cor de quem está à frente nele assim que começa a ser apurado</p>
     <div class="reg">
       <div class="mapa-wrap"><canvas id="mapa" role="img" aria-label="Mapa dos municípios do Brasil coloridos pelo candidato à frente em cada um"></canvas><div class="leg" id="leg"></div></div>
-      <div class="bars" id="regioes"></div>
+      <div class="lado">
+        <div class="bars" id="regioes"></div>
+        <h3 class="sub3">Estados</h3>
+        <div class="ufs" id="ufs"></div>
+      </div>
     </div>
-    <details style="margin-top:14px">
-      <summary>Ver todos os estados</summary>
-      <div class="tw"><table id="tab"><thead></thead><tbody></tbody></table></div>
-    </details>
   </section>
 
   <p class="foot">Projeção independente feita a partir dos arquivos públicos de resultado do TSE, município a município, usando o resultado de cada cidade no 1º turno e na eleição de 2022. Não é resultado oficial. A faixa indica a incerteza típica da projeção naquele ponto da apuração.</p>
@@ -207,34 +209,28 @@ function desenharPizza(){
   const box=document.getElementById("cands"); box.replaceChildren();
   [...cs].sort((a,b)=>b.proj-a.proj).forEach(c=>{ if(!tot) c={...c};
     const d=document.createElement("div"); d.className="row";
-    d.innerHTML=`<i class="sw" style="background:${cor(c.n)}"></i><span class="nm"></span><span class="pc">${pct(c.proj)}</span><span class="sub">apurado agora: ${pct(c.apurado,2)}</span>`;
+    d.innerHTML=`<i class="sw" style="background:${cor(c.n)}"></i><span class="nm"></span><span class="pc">${pct(c.proj)}</span>`;
     d.querySelector(".nm").textContent=c.nome; box.appendChild(d);
   });
   const [a,b]=[...cs].sort((x,y)=>y.proj-x.proj);
   const dif=a.proj-b.proj, v=document.createElement("div"); v.className="verdict";
-  const pts = x => { const t=(x*100).toFixed(1).replace(".",","); return t+(t==="1,0"?" ponto":" pontos"); };
   v.textContent = D.faixa==null ? "Aguardando os primeiros votos."
-    : dif > 2*D.faixa ? `${a.nome} à frente por ${pts(dif)}, além da faixa de incerteza (±${(D.faixa*100).toFixed(1).replace(".",",")}).`
-    : `Diferença de ${pts(dif)}, dentro da faixa de incerteza (±${(D.faixa*100).toFixed(1).replace(".",",")}). Ainda não dá para cravar.`;
+    : `Faixa de incerteza: ±${(D.faixa*100).toFixed(1).replace(".",",")} pontos percentuais`;
   box.appendChild(v);
 }
 
 // ---------- números nacionais ----------
-function desenharKpis(){
-  const n=D.nacional, k=document.getElementById("kpis");
-  k.innerHTML=`
-    <div class="kpi" style="grid-column:1/-1"><span>Votos apurados (estimativa do total)</span><b>${pct(n.pct_votos)}</b><div class="prog"><i style="width:${Math.min(100,n.pct_votos*100).toFixed(1)}%"></i></div></div>
-    <div class="kpi"><span>Seções apuradas (TSE)</span><b>${n.pct_secoes==null?"–":pct(n.pct_secoes)}</b></div>
-    <div class="kpi"><span>Votos válidos contados</span><b>${(n.votos_validos/1e6).toFixed(1).replace(".",",")} mi</b></div>
-    <div class="kpi"><span>Municípios com votos</span><b>${num(n.municipios)}</b><small>de ${num(n.municipios_total)}</small></div>
-    <div class="kpi"><span>Faixa de incerteza</span><b>${D.faixa==null?"–":"±"+(D.faixa*100).toFixed(1).replace(".",",")+" p.p."}</b></div>`;
+function desenharStatus(){
+  const n=D.nacional;
+  const h=document.getElementById("hora");
+  h.innerHTML=`<b>${pct(n.pct_votos)}</b> dos votos apurados`+(n.pct_secoes==null?"":` · <b>${pct(n.pct_secoes)}</b> das seções`)+` · atualizado às ${D.atualizado}`;
 }
 
 // ---------- linha do apurado ----------
 function desenharLinha(){
   const svg=document.getElementById("linha"); svg.replaceChildren();
   const S=D.serie||[]; const cs=D.candidatos;
-  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?260:320, L=40, R=W<560?86:130, T=12, B=26;
+  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?260:Math.round(Math.min(460,Math.max(360,W*0.42))), L=40, R=W<560?86:130, T=12, B=26;
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   if (S.length<2){ el("text",{x:W/2,y:H/2,"text-anchor":"middle",class:"ax"},svg,"A linha aparece a partir da segunda atualização."); return; }
   const x0=mins(S[0].t), x1=Math.max(mins(S[S.length-1].t), x0+10);
@@ -289,9 +285,16 @@ function desenharRegioes(){
   D.regioes.forEach(r=>box.appendChild(barraDividida(r.c||{}, r.pct, r.nome, false)));
   const nac={}; D.candidatos.forEach(c=>nac[c.n]=c.apurado);
   box.appendChild(barraDividida(nac, D.nacional.pct_votos, "Brasil", true));
-  const tab=document.getElementById("tab");
-  tab.querySelector("thead").innerHTML=`<tr><th>Estado</th><th>Apurado</th>${D.candidatos.map(c=>`<th>${c.nome.split(" ")[0]}</th>`).join("")}</tr>`;
-  tab.querySelector("tbody").innerHTML=[...D.ufs].sort((a,b)=>a.uf.localeCompare(b.uf)).map(u=>`<tr><td>${u.uf}</td><td>${pct(u.pct)}</td>${D.candidatos.map(c=>`<td>${pct(u.c[c.n]||0)}</td>`).join("")}</tr>`).join("");
+  const box2=document.getElementById("ufs"); box2.replaceChildren();
+  [...D.ufs].sort((x,y)=>x.uf.localeCompare(y.uf)).forEach(u=>{
+    const pe=u.c[e.n]||0, pd=u.c[d.n]||0, t=(pe+pd)||1;
+    const r=document.createElement("div"); r.className="uf"; r.tabIndex=0;
+    const sig = u.uf==="ZZ" ? "Ext." : u.uf;
+    r.innerHTML=`<b>${sig}</b><span>${pct(u.pct,0)}</span><div class="split">${pe+pd>0?`<i style="width:${(pe/t*100).toFixed(2)}%;background:${cor(e.n)}"></i><i style="width:${(pd/t*100).toFixed(2)}%;background:${cor(d.n)}"></i>`:""}</div>`;
+    const h=`<div class="h">${u.uf==="ZZ"?"Exterior":u.uf} · ${pct(u.pct)} apurado</div>`+[e,d].map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(u.c[c.n]||0)}</b></div>`).join("");
+    r.addEventListener("pointermove",ev=>mostrarTip(h,ev.clientX,ev.clientY)); r.addEventListener("pointerleave",esconderTip);
+    box2.appendChild(r);
+  });
 }
 
 // ---------- mapa dos municípios ----------
@@ -349,8 +352,7 @@ function desenharMapa(){
 
 function desenhar(){
   if(!D) return;
-  document.getElementById("hora").textContent = `Atualizado às ${D.atualizado} · a página se atualiza sozinha`;
-  desenharPizza(); desenharKpis(); desenharLinha(); desenharRegioes(); desenharMapa();
+  desenharPizza(); desenharStatus(); desenharLinha(); desenharRegioes(); desenharMapa();
 }
 
 // ---------- busca ----------

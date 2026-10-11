@@ -84,14 +84,15 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 :root[data-theme="dark"] .aviso{background:#3a3110;color:#f3e2a6;border-color:#6b5a1c}
 .ticker{overflow:hidden;background:var(--panel);border:1px solid var(--rule);border-radius:8px;height:38px;display:flex;align-items:center;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
-.trilho{display:flex;white-space:nowrap;will-change:transform;animation:rolar var(--dur,60s) linear infinite}
+.trilho{display:flex;white-space:nowrap;will-change:transform}
+.trilho span{flex:none}
 .ticker:hover .trilho{animation-play-state:paused}
 .trilho span{display:inline-flex;align-items:center;gap:8px;padding-right:44px;font-size:14px;color:var(--ink)}
 .trilho time{font:500 12px var(--f-mono);color:var(--ink3)}
 .trilho .tag{display:inline-block;font:600 10.5px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;padding:3px 6px;border-radius:4px;background:var(--track);color:var(--ink2)}
+.trilho .tag.uf{background:transparent;border:1px solid var(--rule)}
 .trilho .tag.proj{background:var(--ink);color:var(--panel)}
-@keyframes rolar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@media (prefers-reduced-motion: reduce){.trilho{animation:none}}
+
 .chance{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink2)}
 .chance b{font:700 20px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .chance span.m{color:var(--ink3)}
@@ -434,20 +435,55 @@ function desenharMapa(){
 })();
 
 // ---------- faixa rolante com os últimos comentários ----------
-let TICKER_SIG="";
+// Como num letreiro de notícias: rola da direita para a esquerda, em ordem cronológica; comentário novo entra
+// no fim da fila (pela direita) sem reiniciar a rolagem; sem novidades, volta a repetir os mais recentes.
+const TK={vistos:new Set(), fila:[], recentes:[], ciclo:0, x:0, pausa:false, t0:null, ativo:false};
+const ROT={apur:"Nacional",proj:"Projeção",mig:"Migração",uf:"Estadual"};
+function itemTicker(it){
+  if (it.uf){   // parcial de um estado, montada na hora com os dados mais recentes
+    const u=(D.ufs||[]).find(x=>x.uf===it.uf); if(!u) return null;
+    const [e,d]=lados(), pe=u.c[e.n]||0, pd=u.c[d.n]||0, t=(pe+pd)||1, curto=c=>c.nome.split(" ")[0];
+    const nome=u.uf==="ZZ"?"Exterior":u.uf;
+    it={k:"uf", txt:pe+pd>0 ? `${nome} (${pct(u.pct,0)} apurado): ${curto(e)} ${pct(pe/t)} × ${curto(d)} ${pct(pd/t)}` : `${nome}: ainda sem votos`};
+  }
+  const s=document.createElement("span");
+  if (it.t){ const t=document.createElement("time"); t.textContent=it.t; s.appendChild(t); }
+  if(ROT[it.k]){ const b=document.createElement("b"); b.className="tag "+it.k; b.textContent=ROT[it.k]; s.appendChild(b); }
+  s.append(it.txt); return s; }
 function desenharTicker(){
   const tk=document.getElementById("ticker"), tr=document.getElementById("trilho");
-  const F=(D.feed||[]).slice(0,8);
-  tk.hidden=!F.length; if(!F.length){ TICKER_SIG=""; return; }
-  const sig=F.map(x=>x.t+x.txt).join("|"); if(sig===TICKER_SIG) return;   // só reconstrói se mudou (não reinicia a rolagem)
-  TICKER_SIG=sig;
-  const rot={apur:"Apuração",proj:"Projeção",mig:"Migração"};
-  const um=()=>F.map(it=>{ const s=document.createElement("span");
-    const t=document.createElement("time"); t.textContent=it.t; s.appendChild(t);
-    if(rot[it.k]){ const b=document.createElement("b"); b.className="tag "+it.k; b.textContent=rot[it.k]; s.appendChild(b); }
-    s.append(it.txt); return s; });
-  tr.replaceChildren(...um(), ...um());
-  requestAnimationFrame(()=>{ const w=tr.scrollWidth/2; tr.style.setProperty("--dur", Math.max(20, w/70)+"s"); });
+  const F=[...(D.feed||[])].reverse();                       // cronológico: mais antigo primeiro
+  tk.hidden=!F.length; if(!F.length) return;
+  const chave=x=>x.t+"|"+x.txt;
+  const primeira=!TK.vistos.size;
+  F.forEach(it=>{ const k=chave(it); if(!TK.vistos.has(k)){ TK.vistos.add(k); if(!primeira) TK.fila.push(it); } });
+  // ciclo: os 6 comentários mais recentes, intercalados com as parciais de todos os estados (4 a cada comentário)
+  const ufs=[...(D.ufs||[])].filter(u=>u.pct>0).map(u=>u.uf).sort().map(uf=>({uf}));
+  const com=F.slice(-6), ciclo=[]; let k=0;
+  com.forEach(c=>{ ciclo.push(c); for(let j=0;j<4&&k<ufs.length;j++) ciclo.push(ufs[k++]); });
+  while(k<ufs.length) ciclo.push(ufs[k++]);
+  TK.recentes=ciclo;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ tr.replaceChildren(itemTicker(F[F.length-1])); return; }
+  if (!TK.ativo){ TK.ativo=true; TK.ciclo=0; TK.x=tk.clientWidth;   // começa entrando pela direita
+    tr.style.animation="none"; tk.addEventListener("pointerenter",()=>TK.pausa=true); tk.addEventListener("pointerleave",()=>TK.pausa=false);
+    requestAnimationFrame(passoTicker); }
+}
+function proximoTicker(){
+  if (TK.fila.length) return TK.fila.shift();
+  const r=TK.recentes; if(!r.length) return null;
+  const it=r[TK.ciclo % r.length]; TK.ciclo++; return it;
+}
+function passoTicker(ts){
+  const tk=document.getElementById("ticker"), tr=document.getElementById("trilho");
+  if (TK.t0==null) TK.t0=ts; const dt=Math.min(0.1,(ts-TK.t0)/1000); TK.t0=ts;
+  if (!TK.pausa && !tk.hidden) TK.x -= 70*dt;
+  // remove o que já saiu pela esquerda
+  while (tr.firstElementChild && TK.x + tr.firstElementChild.offsetWidth < 0){ TK.x += tr.firstElementChild.offsetWidth; tr.firstElementChild.remove(); }
+  // mantém a fila abastecida pela direita
+  let guarda=0;
+  while (TK.x + tr.scrollWidth < tk.clientWidth + 400 && guarda++<20){ const it=proximoTicker(); if(!it) break; const el=itemTicker(it); if(el) tr.appendChild(el); }
+  tr.style.transform=`translateX(${TK.x.toFixed(1)}px)`;
+  requestAnimationFrame(passoTicker);
 }
 
 // ---------- comentários ----------
@@ -460,7 +496,7 @@ function desenharFeed(){
   F.forEach(it=>{ const li=document.createElement("li");
     if(FEED_VISTO && !FEED_VISTO.has(chave(it))) li.className="novo";
     const t=document.createElement("time"); t.textContent=it.t; const p=document.createElement("span");
-    const rot={apur:"Apuração",proj:"Projeção",mig:"Migração"}[it.k];
+    const rot={apur:"Nacional",proj:"Projeção",mig:"Migração"}[it.k];
     if(rot){ const tg=document.createElement("b"); tg.className="tag "+it.k; tg.textContent=rot; p.appendChild(tg); }
     p.append(it.txt);
     li.append(t,p); ol.appendChild(li); });

@@ -204,7 +204,7 @@ function el(tag, attrs, parent, text){ const e=document.createElementNS(NS,tag);
 const pct = (v,c=1) => (v*100).toFixed(c).replace(".",",")+"%";
 const num = v => Math.round(v).toLocaleString("pt-BR");
 const cor = n => `var(--c${n})`;
-const mins = t => { const [h,m]=t.split(":").map(Number); return (h<12?h+24:h)*60+m; };
+const mins = t => { const [h,m,sg]=t.split(":").map(Number); return (h<12?h+24:h)*60+m+(sg||0)/60; };
 const tip = document.getElementById("tip");
 function mostrarTip(html, x, y){ tip.innerHTML=html; tip.hidden=false; const r=tip.getBoundingClientRect();
   tip.style.left=Math.min(x+14, innerWidth-r.width-8)+"px"; tip.style.top=Math.min(y+14, innerHeight-r.height-8)+"px"; }
@@ -291,7 +291,7 @@ function desenharLinha(){
     let i=0,b=1e9; S.forEach((o,j)=>{const d=Math.abs(X(o.t)-q.x); if(d<b){b=d;i=j;}}); const o=S[i], x=X(o.t);
     xh.setAttribute("x1",x); xh.setAttribute("x2",x); xh.setAttribute("visibility","visible");
     dots.forEach((d,k)=>{d.setAttribute("cx",x); d.setAttribute("cy",Y(o.c[cs[k].n])); d.setAttribute("visibility","visible");});
-    mostrarTip(`<div class="h">${o.t} · ${pct(o.pct)} apurado</div>`+cs.map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(o.c[c.n],2)}</b></div>`+
+    mostrarTip(`<div class="h">${o.t.slice(0,5)} · ${pct(o.pct)} apurado</div>`+cs.map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(o.c[c.n],2)}</b></div>`+
       (o.p&&o.pct>=0.05?`<div class="r"><span style="padding-left:15px;color:var(--ink3)">projeção</span><span>${pct(o.p[c.n],1)}</span></div>`:"")).join(""),ev.clientX,ev.clientY); }
   hit.addEventListener("pointermove",mv); hit.addEventListener("pointerdown",mv);
   hit.addEventListener("pointerleave",()=>{esconderTip(); xh.setAttribute("visibility","hidden"); dots.forEach(d=>d.setAttribute("visibility","hidden"));});

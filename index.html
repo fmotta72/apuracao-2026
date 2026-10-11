@@ -46,8 +46,16 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 .note{color:var(--ink3);font-size:13px;margin:2px 0 10px}
 .top{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:16px;align-items:stretch}
 @media (max-width:760px){.top{grid-template-columns:1fr}.top .proj{order:-1}}
-.pie-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:calc(100% - 34px)}
-.pie-wrap svg{width:100%;max-width:290px;margin:0 auto}
+.pj{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:4px}
+.pj .nm{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.pj .nm i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.pj .pc{font:700 clamp(34px,3.4vw,44px)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.pj .dir{text-align:right}.pj .dir .nm{justify-content:flex-end}
+.pjbar{position:relative;margin:12px 0 6px}
+.pjbar .split{height:12px}
+.pjbar .meio{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--ink)}
+.proj .sub3{margin-top:16px}
+#mig .bar{grid-template-columns:minmax(84px,104px) 1fr}
 .status b{color:var(--ink);font-variant-numeric:tabular-nums}
 .cand{display:flex;flex-direction:column;gap:12px}
 .cand .row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:baseline}
@@ -56,6 +64,10 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 .cand .pc{font:700 clamp(26px,2.6vw,36px)/1 var(--f-display);font-variant-numeric:tabular-nums}
 .cand .sub{grid-column:2/4;color:var(--ink3);font-size:13px;margin-top:-6px}
 .verdict{color:var(--ink3);font-size:13px;text-align:center}
+.lleg{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;color:var(--ink2);font-size:13px;margin:-4px 0 8px}
+.lleg span{display:inline-flex;align-items:center;gap:6px}.lleg svg{width:auto;display:inline-block}
+.lleg .hb{color:var(--ink3);margin-left:auto}
+.lnp{fill:none;stroke-width:1.8;stroke-dasharray:5 4;stroke-linecap:round}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
 .kpi span{display:block;color:var(--ink3);font-size:12.5px}
 .kpi b{display:block;font:700 26px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -125,16 +137,20 @@ th{color:var(--ink2);font-weight:600}
 
   <div class="top">
     <section class="panel" aria-labelledby="t-linha">
-      <h2 id="t-linha">% dos votos válidos de cada candidato ao longo da apuração</h2>
-      <p class="note">Contagem oficial acumulada até cada momento (não é a projeção) · horário de Brasília</p>
+      <h2 id="t-linha">% dos votos válidos ao longo da apuração</h2>
+      <div class="lleg">
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>votos apurados</span>
+        <span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="currentColor" stroke-width="1.8" stroke-dasharray="5 4" stroke-linecap="round"/></svg>projeção do resultado final</span>
+        <span><svg width="18" height="10" aria-hidden="true"><rect x="0" y="0" width="18" height="10" rx="2" fill="currentColor" fill-opacity=".18"/></svg>faixa de incerteza</span>
+        <span class="hb">horário de Brasília</span>
+      </div>
       <svg id="linha" role="img" aria-label="Linhas com o percentual de votos válidos de cada candidato ao longo da apuração"></svg>
     </section>
     <section class="panel proj" aria-labelledby="t-proj">
       <h2 id="t-proj">Projeção do resultado final</h2>
-      <div class="pie-wrap">
-        <svg id="pie" viewBox="-110 -110 220 220" role="img" aria-label="Gráfico de pizza com a projeção do resultado final"></svg>
-        <div class="cand" id="cands"></div>
-      </div>
+      <div id="projbox"></div>
+      <h3 class="sub3">Migração dos votos dos eliminados</h3>
+      <div class="bars" id="mig"></div>
     </section>
   </div>
 
@@ -160,8 +176,10 @@ th{color:var(--ink2);font-weight:600}
 function fontes(){
   const h = location.hostname, partes = location.pathname.split("/").filter(Boolean);
   const lista = [];
-  if (h.endsWith(".github.io") && partes.length) {
-    const dono = h.replace(".github.io",""), repo = partes[0];
+  // no endereço do GitHub, deduz dono/repositório; num domínio próprio, usa os valores fixos
+  let dono = "fmotta72", repo = "apuracao-2026";
+  if (h.endsWith(".github.io") && partes.length) { dono = h.replace(".github.io",""); repo = partes[0]; }
+  if (h !== "localhost" && h !== "127.0.0.1" && location.protocol.startsWith("http")) {
     lista.push({url:`https://api.github.com/repos/${dono}/${repo}/contents/dados.json?ref=dados`, headers:{Accept:"application/vnd.github.raw+json"}});
     lista.push({url:`https://raw.githubusercontent.com/${dono}/${repo}/dados/dados.json`});
   }
@@ -185,39 +203,32 @@ function esconderTip(){ tip.hidden=true; }
 
 let D = null;
 
-// ---------- pizza da projeção ----------
-function desenharPizza(){
-  const svg=document.getElementById("pie"); svg.replaceChildren();
-  const cs=D.candidatos;
-  const tot=cs.reduce((a,c)=>a+c.proj,0); const R=100;
-  if(!tot){ el("circle",{r:R,fill:"var(--track)"},svg); el("text",{y:5,"text-anchor":"middle",class:"ax"},svg,"aguardando votos");
-    svg.setAttribute("viewBox","-110 -112 220 224"); }
-  let a0=-Math.PI/2;
-  cs.forEach(c=>{
-    const f=c.proj/tot, a1=a0+f*2*Math.PI, big=f>0.5?1:0;
-    const p=`M0,0 L${R*Math.cos(a0)},${R*Math.sin(a0)} A${R},${R} 0 ${big} 1 ${R*Math.cos(a1)},${R*Math.sin(a1)} Z`;
-    const s=el("path",{d:p,fill:cor(c.n),stroke:"var(--panel)","stroke-width":2,tabindex:0},svg);
-    const t=`<div class="h">${c.nome}</div><div class="r"><span>Projeção</span><b>${pct(c.proj,2)}</b></div><div class="r"><span>Faixa</span><span>${pct(c.proj-D.faixa)} a ${pct(c.proj+D.faixa)}</span></div><div class="r"><span>Apurado agora</span><span>${pct(c.apurado,2)}</span></div>`;
-    s.addEventListener("pointermove",e=>mostrarTip(t,e.clientX,e.clientY)); s.addEventListener("pointerleave",esconderTip);
-    const am=(a0+a1)/2;
-    if (f>0.08) {
-      const cx=R*0.52*Math.cos(am), cy=R*0.52*Math.sin(am);
-      el("text",{x:cx,y:cy-4,"text-anchor":"middle",fill:"#fff",style:"font:600 11px var(--f-body);pointer-events:none"},svg,c.nome.split(" ")[0]);
-      el("text",{x:cx,y:cy+15,"text-anchor":"middle",fill:"#fff",style:"font:700 19px var(--f-display);pointer-events:none"},svg,pct(c.proj));
-    }
-    a0=a1;
-  });
-  // marca dos 50%
-  el("line",{x1:0,y1:R+2,x2:0,y2:R+9,stroke:"var(--ink2)","stroke-width":1.5},svg);
-  el("line",{x1:0,y1:-R-2,x2:0,y2:-R-9,stroke:"var(--ink2)","stroke-width":1.5},svg);
-  svg.setAttribute("viewBox","-110 -112 220 224");
-
-  const box=document.getElementById("cands"); box.replaceChildren();
-  const [a,b]=[...cs].sort((x,y)=>y.proj-x.proj);
-  const dif=a.proj-b.proj, v=document.createElement("div"); v.className="verdict";
-  v.textContent = D.faixa==null ? "Aguardando os primeiros votos."
+// ---------- projeção e migração ----------
+function desenharProjecao(){
+  const box=document.getElementById("projbox"); box.replaceChildren();
+  const [e,d]=lados(); const tem=(e.proj+d.proj)>0;
+  const pj=document.createElement("div"); pj.className="pj";
+  pj.innerHTML=`<div><div class="nm"><i style="background:${cor(e.n)}"></i></div><div class="pc" style="color:${cor(e.n)}">${tem?pct(e.proj):"–"}</div></div>`+
+               `<div class="dir"><div class="nm"><i style="background:${cor(d.n)}"></i></div><div class="pc" style="color:${cor(d.n)}">${tem?pct(d.proj):"–"}</div></div>`;
+  pj.querySelectorAll(".nm")[0].append(e.nome); pj.querySelectorAll(".nm")[1].prepend(d.nome+" ");
+  box.appendChild(pj);
+  const bar=document.createElement("div"); bar.className="pjbar";
+  const s=(e.proj+d.proj)||1;
+  bar.innerHTML=`<div class="split">${tem?`<i style="width:${(e.proj/s*100).toFixed(2)}%;background:${cor(e.n)}"></i><i style="width:${(d.proj/s*100).toFixed(2)}%;background:${cor(d.n)}"></i>`:""}</div><span class="meio"></span>`;
+  box.appendChild(bar);
+  const v=document.createElement("div"); v.className="verdict";
+  v.textContent = D.faixa==null ? "Aguardando os primeiros votos." : D.faixa<0.0005 ? "Faixa de incerteza: menos de 0,1 ponto percentual"
     : `Faixa de incerteza: ±${(D.faixa*100).toFixed(1).replace(".",",")} pontos percentuais`;
   box.appendChild(v);
+
+  const M=D.migracao, mb=document.getElementById("mig"); mb.replaceChildren();
+  if(!M) return;
+  if(M.nacional==null){ const z=document.createElement("div"); z.className="vazio"; z.style.padding="14px 0";
+    z.textContent="Aparece quando houver cidades suficientes com a apuração concluída."; mb.appendChild(z); return; }
+  const linha=(nome,m,tot)=>{ const c={}; c[e.n]=e.n==="13"?m:1-m; c[d.n]=d.n==="13"?m:1-m;
+    const r=barraDividida(c,null,nome,tot); return r; };
+  M.regioes.forEach(r=>mb.appendChild(linha(r.nome,r.m,false)));
+  mb.appendChild(linha("Brasil",M.nacional,true));
 }
 
 // ---------- números nacionais ----------
@@ -231,11 +242,20 @@ function desenharStatus(){
 function desenharLinha(){
   const svg=document.getElementById("linha"); svg.replaceChildren();
   const S=D.serie||[]; const cs=D.candidatos;
-  const W=Math.max(320, svg.parentElement.clientWidth-32), H=W<560?240:Math.round(Math.min(340,Math.max(260,W*0.4))), L=40, R=W<560?86:130, T=12, B=26;
+  const W=Math.max(320, svg.parentElement.clientWidth-32), L=40, R=W<560?86:130, T=12, B=26;
+  let H=W<560?240:Math.round(Math.min(340,Math.max(260,W*0.4)));
+  // lado a lado com o quadro da projeção: ocupa a mesma altura que ele
+  const top=document.querySelector(".top"), pr=top.querySelector(".proj");
+  if (getComputedStyle(top).gridTemplateColumns.split(" ").length>1 && pr.lastElementChild){
+    const alvo=pr.lastElementChild.getBoundingClientRect().bottom-pr.getBoundingClientRect().top+16;
+    const acima=svg.getBoundingClientRect().top-svg.parentElement.getBoundingClientRect().top;
+    H=Math.max(H, Math.round(alvo-acima-16)); }
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   if (S.length<2){ el("text",{x:W/2,y:H/2,"text-anchor":"middle",class:"ax"},svg,"A linha aparece a partir da segunda atualização."); return; }
   const x0=mins(S[0].t), x1=Math.max(mins(S[S.length-1].t), x0+10);
+  const SP=S.filter(o=>o.p);
   let lo=100, hi=0; S.forEach(o=>cs.forEach(c=>{const v=o.c[c.n]*100; if(v<lo)lo=v; if(v>hi)hi=v;}));
+  SP.forEach(o=>cs.forEach(c=>{const f=(o.f||0)*100, v=o.p[c.n]*100; if(v-f<lo)lo=v-f; if(v+f>hi)hi=v+f;}));
   let y0=Math.max(0,Math.floor(Math.min(lo,45)/5)*5), y1=Math.min(100,Math.ceil(Math.max(hi,55)/5)*5);
   const X=t=>L+(mins(t)-x0)/(x1-x0)*(W-L-R), Y=v=>T+(1-(v*100-y0)/(y1-y0))*(H-T-B);
   const g=el("g",{class:"grid"},svg);
@@ -243,6 +263,10 @@ function desenharLinha(){
   el("line",{x1:L,x2:W-R,y1:Y(.5),y2:Y(.5),class:"ref"},svg);
   const passo = (x1-x0)>240?60:(W<560?60:30);
   for(let m=Math.ceil(x0/passo)*passo; m<=x1; m+=passo){ const t=`${String(Math.floor(m/60)%24).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`; el("text",{x:X(t),y:H-6,"text-anchor":"middle",class:"ax"},svg,t); }
+  if (SP.length>=2) cs.forEach(c=>{
+    const up=SP.map(o=>`${X(o.t).toFixed(1)},${Y(o.p[c.n]+(o.f||0)).toFixed(1)}`), dn=SP.map(o=>`${X(o.t).toFixed(1)},${Y(o.p[c.n]-(o.f||0)).toFixed(1)}`).reverse();
+    el("polygon",{points:up.concat(dn).join(" "),fill:cor(c.n),"fill-opacity":0.13,stroke:"none"},svg);
+    el("polyline",{class:"lnp",stroke:cor(c.n),points:SP.map(o=>`${X(o.t).toFixed(1)},${Y(o.p[c.n]).toFixed(1)}`).join(" ")},svg); });
   cs.forEach(c=>el("polyline",{class:"ln",stroke:cor(c.n),points:S.map(o=>`${X(o.t).toFixed(1)},${Y(o.c[c.n]).toFixed(1)}`).join(" ")},svg));
   const last=S[S.length-1];
   const ends=cs.map(c=>({c,y:Y(last.c[c.n])})).sort((a,b)=>a.y-b.y); let prev=-1e9;
@@ -258,7 +282,8 @@ function desenharLinha(){
     let i=0,b=1e9; S.forEach((o,j)=>{const d=Math.abs(X(o.t)-q.x); if(d<b){b=d;i=j;}}); const o=S[i], x=X(o.t);
     xh.setAttribute("x1",x); xh.setAttribute("x2",x); xh.setAttribute("visibility","visible");
     dots.forEach((d,k)=>{d.setAttribute("cx",x); d.setAttribute("cy",Y(o.c[cs[k].n])); d.setAttribute("visibility","visible");});
-    mostrarTip(`<div class="h">${o.t} · ${pct(o.pct)} apurado</div>`+cs.map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(o.c[c.n],2)}</b></div>`).join(""),ev.clientX,ev.clientY); }
+    mostrarTip(`<div class="h">${o.t} · ${pct(o.pct)} apurado</div>`+cs.map(c=>`<div class="r"><span><i style="background:${cor(c.n)}"></i>${c.nome}</span><b>${pct(o.c[c.n],2)}</b></div>`+
+      (o.p?`<div class="r"><span style="padding-left:15px;color:var(--ink3)">projeção</span><span>${pct(o.p[c.n],1)}</span></div>`:"")).join(""),ev.clientX,ev.clientY); }
   hit.addEventListener("pointermove",mv); hit.addEventListener("pointerdown",mv);
   hit.addEventListener("pointerleave",()=>{esconderTip(); xh.setAttribute("visibility","hidden"); dots.forEach(d=>d.setAttribute("visibility","hidden"));});
 }
@@ -272,7 +297,7 @@ function barraDividida(c, ap, nome, total){
   const [e,d]=lados(); const pe=c[e.n]||0, pd=c[d.n]||0, s=(pe+pd)||1;
   const row=document.createElement("div"); row.className="bar"+(total?" tot":"");
   const l=document.createElement("div"); l.className="l"; l.textContent=nome;
-  const sm=document.createElement("small"); sm.className="ap"; sm.textContent=`${pct(ap,0)} apurado`; l.appendChild(sm);
+  if (ap!=null){ const sm=document.createElement("small"); sm.className="ap"; sm.textContent=`${pct(ap,0)} apurado`; l.appendChild(sm); }
   const sp=document.createElement("div"); sp.className="split";
   if (pe+pd>0) sp.innerHTML=`<i style="width:${(pe/s*100).toFixed(2)}%;background:${cor(e.n)}">${pct(pe)}</i><i style="width:${(pd/s*100).toFixed(2)}%;background:${cor(d.n)}">${pct(pd)}</i>`;
   row.append(l, sp); return row;
@@ -353,7 +378,7 @@ function desenharMapa(){
 
 function desenhar(){
   if(!D) return;
-  desenharPizza(); desenharStatus(); desenharLinha(); desenharRegioes(); desenharMapa();
+  desenharProjecao(); desenharStatus(); desenharLinha(); desenharRegioes(); desenharMapa();
 }
 
 // ---------- busca ----------

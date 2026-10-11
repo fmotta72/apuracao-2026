@@ -53,6 +53,8 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 .fd time{font:500 12px var(--f-mono);color:var(--ink3);padding-top:2px}
 .fd li.novo{animation:destaque 2.5s ease-out}
 @keyframes destaque{from{background:var(--track)}to{background:transparent}}
+.fd .tag{display:inline-block;font:600 10.5px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;padding:3px 6px;border-radius:4px;margin-right:7px;vertical-align:1px;background:var(--track);color:var(--ink2)}
+.fd .tag.proj{background:var(--ink);color:var(--panel)}
 .fd .vz{display:block;color:var(--ink3);grid-template-columns:1fr}
 .mapa-wrap{margin:0 auto}
 .col-dir{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -80,6 +82,19 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 .aviso{background:#fff4d6;color:#4a3a00;border:1px solid #f0d58a;border-radius:8px;padding:10px 12px;font-size:14px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .aviso{background:#3a3110;color:#f3e2a6;border-color:#6b5a1c}}
 :root[data-theme="dark"] .aviso{background:#3a3110;color:#f3e2a6;border-color:#6b5a1c}
+.ticker{overflow:hidden;background:var(--panel);border:1px solid var(--rule);border-radius:8px;height:38px;display:flex;align-items:center;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+.trilho{display:flex;white-space:nowrap;will-change:transform;animation:rolar var(--dur,60s) linear infinite}
+.ticker:hover .trilho{animation-play-state:paused}
+.trilho span{display:inline-flex;align-items:center;gap:8px;padding-right:44px;font-size:14px;color:var(--ink)}
+.trilho time{font:500 12px var(--f-mono);color:var(--ink3)}
+.trilho .tag{display:inline-block;font:600 10.5px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;padding:3px 6px;border-radius:4px;background:var(--track);color:var(--ink2)}
+.trilho .tag.proj{background:var(--ink);color:var(--panel)}
+@keyframes rolar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.trilho{animation:none}}
+.chance{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink2)}
+.chance b{font:700 20px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.chance span.m{color:var(--ink3)}
 .lnp{fill:none;stroke-width:1.8;stroke-dasharray:5 4;stroke-linecap:round}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
 .kpi span{display:block;color:var(--ink3);font-size:12.5px}
@@ -151,6 +166,7 @@ th{color:var(--ink2);font-weight:600}
     <h1>Eleição Presidencial 2026 – Apuração do 2º Turno – 25/10/2026</h1>
     <div class="status"><span class="pill" id="estado"><i></i><span>carregando…</span></span><span id="hora"></span></div>
   </header>
+  <div class="ticker" id="ticker" hidden aria-label="Últimos comentários"><div class="trilho" id="trilho"></div></div>
 
   <div class="aviso" id="aviso-ensaio" role="note" hidden><b>Ensaio com dados simulados.</b> Estes números vêm do 2º turno de 2022, liberados aos poucos para testar o site. Não são a apuração de 2026.</div>
 
@@ -250,6 +266,12 @@ function desenharProjecao(){
   v.textContent = D.faixa==null ? "Aguardando os primeiros votos." : D.faixa<0.0005 ? "Faixa de incerteza: menos de 0,1 ponto percentual"
     : `Faixa de incerteza: ±${(D.faixa*100).toFixed(1).replace(".",",")} pontos percentuais`;
   box.appendChild(v);
+  if (e.chance!=null && d.chance!=null){
+    const fc=x=>x>0.99?"> 99%":x<0.01?"< 1%":pct(x,0);
+    const ch=document.createElement("div"); ch.className="chance";
+    ch.innerHTML=`<b style="color:${cor(e.n)}">${fc(e.chance)}</b><span class="m">chance de vitória</span><b style="color:${cor(d.n)}">${fc(d.chance)}</b>`;
+    box.appendChild(ch);
+  }
 
   const M=D.migracao, mb=document.getElementById("mig"); mb.replaceChildren();
   if(!M) return;
@@ -411,6 +433,23 @@ function desenharMapa(){
   cv.addEventListener("pointermove",mv); cv.addEventListener("pointerdown",mv); cv.addEventListener("pointerleave",esconderTip);
 })();
 
+// ---------- faixa rolante com os últimos comentários ----------
+let TICKER_SIG="";
+function desenharTicker(){
+  const tk=document.getElementById("ticker"), tr=document.getElementById("trilho");
+  const F=(D.feed||[]).slice(0,8);
+  tk.hidden=!F.length; if(!F.length){ TICKER_SIG=""; return; }
+  const sig=F.map(x=>x.t+x.txt).join("|"); if(sig===TICKER_SIG) return;   // só reconstrói se mudou (não reinicia a rolagem)
+  TICKER_SIG=sig;
+  const rot={apur:"Apuração",proj:"Projeção",mig:"Migração"};
+  const um=()=>F.map(it=>{ const s=document.createElement("span");
+    const t=document.createElement("time"); t.textContent=it.t; s.appendChild(t);
+    if(rot[it.k]){ const b=document.createElement("b"); b.className="tag "+it.k; b.textContent=rot[it.k]; s.appendChild(b); }
+    s.append(it.txt); return s; });
+  tr.replaceChildren(...um(), ...um());
+  requestAnimationFrame(()=>{ const w=tr.scrollWidth/2; tr.style.setProperty("--dur", Math.max(20, w/70)+"s"); });
+}
+
 // ---------- comentários ----------
 let FEED_VISTO=null;
 function desenharFeed(){
@@ -420,7 +459,10 @@ function desenharFeed(){
   const chave=x=>x.t+"|"+x.txt;
   F.forEach(it=>{ const li=document.createElement("li");
     if(FEED_VISTO && !FEED_VISTO.has(chave(it))) li.className="novo";
-    const t=document.createElement("time"); t.textContent=it.t; const p=document.createElement("span"); p.textContent=it.txt;
+    const t=document.createElement("time"); t.textContent=it.t; const p=document.createElement("span");
+    const rot={apur:"Apuração",proj:"Projeção",mig:"Migração"}[it.k];
+    if(rot){ const tg=document.createElement("b"); tg.className="tag "+it.k; tg.textContent=rot; p.appendChild(tg); }
+    p.append(it.txt);
     li.append(t,p); ol.appendChild(li); });
   FEED_VISTO=new Set(F.map(chave));
 }
@@ -428,7 +470,7 @@ function desenharFeed(){
 function desenhar(){
   if(!D) return;
   document.getElementById("aviso-ensaio").hidden=!D.ensaio;
-  desenharProjecao(); desenharStatus(); desenharRegioes(); desenharLinha(); desenharMapa(); desenharFeed();
+  desenharProjecao(); desenharStatus(); desenharRegioes(); desenharLinha(); desenharMapa(); desenharFeed(); desenharTicker();
 }
 
 // ---------- busca ----------

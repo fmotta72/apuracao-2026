@@ -104,6 +104,32 @@ h1{font:700 clamp(22px,3.2vw,34px)/1.12 var(--f-display);margin:0 0 6px;letter-s
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo.claro{display:none}:root:not([data-theme="light"]) .logo.escuro{display:block}}
 :root[data-theme="dark"] .logo.claro{display:none}:root[data-theme="dark"] .logo.escuro{display:block}
 .cab-txt{min-width:0}
+/* ---------- "Como funciona" ---------- */
+.btn-como{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--f-body);padding:4px 12px;border-radius:999px;
+  border:1px solid var(--rule);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn-como:hover{border-color:var(--ink3)}
+.btn-como:focus-visible,.como-x:focus-visible{outline:2px solid var(--seq);outline-offset:2px}
+.btn-como svg{width:15px;height:15px}
+dialog.como{width:min(720px,calc(100% - 32px));max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--rule);
+  border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog.como::backdrop{background:rgba(10,12,10,.5)}
+.como-cab{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--rule)}
+.como-cab h2{font:700 22px/1.1 var(--f-display);margin:0}
+.como-x{border:0;background:transparent;color:var(--ink2);font-size:26px;line-height:1;cursor:pointer;padding:2px 8px;border-radius:6px}
+.como-x:hover{background:var(--track)}
+.como-corpo{padding:6px 20px 22px;font-size:14.5px;line-height:1.6;color:var(--ink2)}
+.como-corpo h3{font:600 15px/1.3 var(--f-body);color:var(--ink);margin:20px 0 6px}
+.como-corpo p{margin:0 0 10px}
+.como-corpo ol,.como-corpo ul{margin:0 0 10px;padding-left:20px}
+.como-corpo li{margin:0 0 6px}
+.como-corpo b{color:var(--ink);font-weight:600}
+.como-corpo table{border-collapse:collapse;width:100%;margin:4px 0 10px;font-size:13.5px}
+.como-corpo th,.como-corpo td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.como-corpo th:first-child,.como-corpo td:first-child{text-align:left}
+.como-corpo th{color:var(--ink3);font-weight:500;font-size:12.5px}
+.como-corpo .destaque{background:var(--track);border-radius:8px;padding:10px 12px;margin:4px 0 12px;color:var(--ink)}
+.como-corpo .pe{font-size:13px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:12px;margin-top:18px}
 @media (max-width:560px){.cab{gap:12px;align-items:flex-start}.logo{height:42px;margin-top:4px}}
 .lnp{fill:none;stroke-width:1.8;stroke-dasharray:5 4;stroke-linecap:round}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
@@ -176,7 +202,8 @@ th{color:var(--ink2);font-weight:600}
     <a class="marca" href="./" aria-label="ElectCast"><img class="logo claro" src="logo.png" alt="ElectCast"><img class="logo escuro" src="logo_escuro.png" alt="ElectCast"></a>
     <div class="cab-txt">
     <h1 id="titulo">Eleição Presidencial 2026 – Apuração do 2º Turno – 25/10/2026</h1>
-    <div class="status"><span class="pill" id="estado"><i></i><span>carregando…</span></span><span id="hora"></span></div>
+    <div class="status"><span class="pill" id="estado"><i></i><span>carregando…</span></span><span id="hora"></span>
+      <button type="button" class="btn-como" id="abrir-como" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6.4 6.2a1.7 1.7 0 1 1 2.4 1.6c-.5.2-.8.6-.8 1.1v.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.4" r=".85" fill="currentColor"/></svg>Como funciona</button></div>
     </div>
   </header>
   <div class="ticker" id="ticker" hidden aria-label="Últimos comentários"><div class="trilho" id="trilho"></div></div>
@@ -223,11 +250,71 @@ th{color:var(--ink2);font-weight:600}
     </div>
   </div>
 
-  <p class="foot">Projeção independente feita a partir dos arquivos públicos de resultado do TSE, município a município, usando o resultado de cada cidade no 1º turno e na eleição de 2022. Não é resultado oficial. A faixa indica a incerteza típica da projeção naquele ponto da apuração.</p>
+  <p class="foot">Projeção independente feita a partir dos arquivos públicos do TSE: resultados por município e boletins de urna de cada seção, comparados com o 1º turno. Não é resultado oficial. A faixa indica a incerteza típica da projeção naquele ponto da apuração. <a href="#" id="abrir-como-2">Como funciona</a></p>
 </main>
+
+<dialog class="como" id="como" aria-labelledby="como-titulo">
+  <div class="como-cab"><h2 id="como-titulo">Como funciona</h2><button type="button" class="como-x" id="fechar-como" aria-label="Fechar">×</button></div>
+  <div class="como-corpo">
+    <h3>O que é este site</h3>
+    <p>Um acompanhamento independente da apuração do 2º turno, com uma <b>projeção do resultado final</b> feita enquanto os votos são contados. Não tem relação com o TSE nem com campanhas, e não é resultado oficial: o resultado oficial é o do TSE.</p>
+
+    <h3>Por que não basta olhar a contagem</h3>
+    <p>As urnas não chegam ao TSE em ordem aleatória. Algumas regiões e alguns tipos de bairro chegam antes, e o percentual parcial reflete quem chegou primeiro, não o país inteiro.</p>
+    <div class="destaque">No 2º turno de 2022, com 1% das urnas apuradas (17h13), a contagem mostrava Lula <b>7,4 pontos abaixo</b> do resultado final. Com 10% (17h32), ainda estava 2,9 pontos abaixo.</div>
+
+    <h3>De onde vêm os dados</h3>
+    <ul>
+      <li><b>Resultados por município</b>, publicados pelo TSE e lidos a cada minuto. São a base da contagem que aparece no site.</li>
+      <li><b>Boletins de urna</b>: o arquivo de cada seção eleitoral, também publicado pelo TSE durante a apuração. Uma amostra das seções que já chegaram é usada para medir como cada tipo de seção está votando.</li>
+      <li><b>O 1º turno de 2026, seção por seção</b>: o ponto de partida da projeção.</li>
+    </ul>
+
+    <h3>Como a projeção é feita</h3>
+    <ol>
+      <li><b>Cada seção tem um perfil.</b> As cerca de 470 mil seções do país são agrupadas em 60 grupos de seções parecidas, conforme como votaram no 1º turno, independentemente da cidade ou do estado onde ficam.</li>
+      <li><b>Mede-se a mudança do 1º para o 2º turno.</b> Nas seções que já chegaram, compara-se o voto de agora com o do 1º turno da mesma seção. Isso mostra, grupo a grupo, para onde foram os votos dos candidatos eliminados e quanto variou o comparecimento.</li>
+      <li><b>Projeta-se o que falta.</b> Cada seção que ainda não chegou recebe o resultado do seu 1º turno mais a mudança medida no seu grupo, com um ajuste próprio do município quando ele já tem seções apuradas.</li>
+      <li><b>Soma-se tudo:</b> os votos já contados mais a previsão das seções que faltam dão a projeção.</li>
+    </ol>
+    <p>Bem no começo da noite, até 1% dos votos apurados, os poucos dados que existem vêm do exterior e de lugares pouco representativos. Nessa fase, a projeção usa um modelo mais simples, por município, e a faixa de incerteza é bem mais larga.</p>
+
+    <h3>Como sabemos que funciona</h3>
+    <p>O método foi testado refazendo as noites de apuração do 2º turno de 2022 (na ordem real em que as urnas chegaram) e de 2018. Maior erro da projeção, em pontos percentuais:</p>
+    <table>
+      <thead><tr><th>Votos apurados</th><th>Contagem (2022)</th><th>Projeção (2022)</th><th>Projeção (2018)</th></tr></thead>
+      <tbody>
+        <tr><td>1%</td><td>7,4</td><td>0,1</td><td>0,3</td></tr>
+        <tr><td>3%</td><td>5,7</td><td>0,1</td><td>0,2</td></tr>
+        <tr><td>10%</td><td>2,9</td><td>0,1</td><td>0,1</td></tr>
+        <tr><td>30%</td><td>1,8</td><td>0,1</td><td>0,1</td></tr>
+      </tbody>
+    </table>
+
+    <h3>A faixa de incerteza e a chance de vitória</h3>
+    <p>A faixa (±) mostra até onde a projeção ainda pode errar naquele ponto da apuração. Ela foi calibrada nesses testes com folga: é cerca de 2,5 vezes o maior erro observado e encolhe conforme as urnas chegam (±0,8 ponto com 1% apurado, ±0,25 com 20%, ±0,1 com 80%). A <b>chance de vitória</b> é calculada a partir da projeção e dessa faixa. Uma chance de 90% quer dizer que, em situações como essa, o candidato que está à frente perderia uma vez em cada dez.</p>
+
+    <h3>Limites</h3>
+    <ul>
+      <li>Dois testes (2018 e 2022) são uma boa indicação, mas não uma garantia. Uma eleição com um padrão muito diferente pode surpreender.</li>
+      <li>O site depende dos arquivos públicos do TSE. Se eles atrasarem ou mudarem de formato, a atualização pode atrasar também.</li>
+      <li>O quadro "Migração dos votos dos eliminados" é uma estimativa feita só com cidades já totalmente apuradas.</li>
+    </ul>
+    <p class="pe">Projeto independente. Os números do site são uma estimativa estatística; o resultado oficial é o divulgado pelo TSE.</p>
+  </div>
+</dialog>
 <div id="tip" hidden></div>
 
 <script>
+// ---------- "Como funciona" ----------
+(()=>{ const dlg=document.getElementById("como");
+  const abrir=ev=>{ ev&&ev.preventDefault(); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open",""); };
+  document.getElementById("abrir-como").addEventListener("click",abrir);
+  document.getElementById("abrir-como-2").addEventListener("click",abrir);
+  document.getElementById("fechar-como").addEventListener("click",()=>dlg.close());
+  dlg.addEventListener("click",ev=>{ if(ev.target===dlg) dlg.close(); });   // clique fora fecha
+  if(location.hash==="#como-funciona") abrir();
+})();
 "use strict";
 // ---------- de onde vêm os dados ----------
 function fontes(){
@@ -264,7 +351,7 @@ let D = null;
 // ---------- projeção e migração ----------
 function desenharProjecao(){
   const box=document.getElementById("projbox"); box.replaceChildren();
-  const [e,d]=lados(); const tem=(e.proj+d.proj)>0;
+  const [e,d]=lados(); const mostra=D.mostrar_proj!==false; const tem=mostra&&(e.proj+d.proj)>0;
   const pj=document.createElement("div"); pj.className="pj";
   pj.innerHTML=`<div><div class="nm"><i style="background:${cor(e.n)}"></i></div><div class="pc" style="color:${cor(e.n)}">${tem?pct(e.proj):"–"}</div></div>`+
                `<div class="dir"><div class="nm"><i style="background:${cor(d.n)}"></i></div><div class="pc" style="color:${cor(d.n)}">${tem?pct(d.proj):"–"}</div></div>`;
@@ -275,10 +362,12 @@ function desenharProjecao(){
   bar.innerHTML=`<div class="split">${tem?`<i style="width:${(e.proj/s*100).toFixed(2)}%;background:${cor(e.n)}"></i><i style="width:${(d.proj/s*100).toFixed(2)}%;background:${cor(d.n)}"></i>`:""}</div><span class="meio"></span>`;
   box.appendChild(bar);
   const v=document.createElement("div"); v.className="verdict";
-  v.textContent = D.faixa==null ? "Aguardando os primeiros votos." : D.faixa<0.0005 ? "Faixa de incerteza: menos de 0,1 ponto percentual"
+  v.textContent = D.faixa==null ? "Aguardando os primeiros votos."
+    : !mostra ? `A projeção aparece quando ${pct(D.min_proj!=null?D.min_proj:0.05,0)} dos votos estiverem apurados.`
+    : D.faixa<0.0005 ? "Faixa de incerteza: menos de 0,1 ponto percentual"
     : `Faixa de incerteza: ±${(D.faixa*100).toFixed(1).replace(".",",")} pontos percentuais`;
   box.appendChild(v);
-  if (e.chance!=null && d.chance!=null){
+  if (mostra && e.chance!=null && d.chance!=null){
     const fc=x=>x>0.99?"> 99%":x<0.01?"< 1%":pct(x,0);
     const ch=document.createElement("div"); ch.className="chance";
     ch.innerHTML=`<b style="color:${cor(e.n)}">${fc(e.chance)}</b><span class="m">chance de vitória</span><b style="color:${cor(d.n)}">${fc(d.chance)}</b>`;

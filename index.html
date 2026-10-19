@@ -181,7 +181,6 @@ th{color:var(--ink2);font-weight:600}
   </header>
   <div class="ticker" id="ticker" hidden aria-label="Últimos comentários"><div class="trilho" id="trilho"></div></div>
 
-  <div class="aviso" id="aviso-ensaio" role="note" hidden><b>Ensaio com dados simulados.</b> Estes números vêm do 2º turno de 2022, liberados aos poucos para testar o site. Não são a apuração de 2026.</div>
 
   <div class="top">
     <section class="panel linha" aria-labelledby="t-linha">
@@ -518,7 +517,6 @@ function desenharFeed(){
 
 function desenhar(){
   if(!D) return;
-  document.getElementById("aviso-ensaio").hidden=!D.ensaio;
   const tit = D.ensaio ? "BACKTEST · Eleição Presidencial 2022 – 2º Turno – 30/10/2022 (simulação, não é a apuração real)"
                        : "Eleição Presidencial 2026 – Apuração do 2º Turno – 25/10/2026";
   if(document.getElementById("titulo").textContent!==tit){

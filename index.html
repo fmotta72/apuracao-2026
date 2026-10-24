@@ -540,7 +540,18 @@ function desenharMapa(){
 // no fim da fila (pela direita) sem reiniciar a rolagem; sem novidades, volta a repetir os mais recentes.
 const TK={vistos:new Set(), fila:[], recentes:[], ciclo:0, x:0, pausa:false, t0:null, ativo:false};
 const ROT={apur:"Nacional",proj:"Projeção",mig:"Migração",uf:"Estadual"};
+// projeção atual + margem + chance de vitória do favorito, montada com os dados mais recentes
+function textoProj(){
+  if(!D||D.mostrar_proj===false||D.faixa==null) return null;
+  const cs=D.candidatos; if(!cs||cs.length<2) return null;
+  const [a,b]=[...cs].sort((x,y)=>y.proj-x.proj); if(!(a.proj>0)) return null;
+  const curto=c=>c.nome.split(" ")[0];
+  const fx=D.faixa<0.0005?"menos de 0,1 ponto":`±${(D.faixa*100).toFixed(1).replace(".",",")} ponto${D.faixa>=0.0195?"s":""}`;
+  const ch=a.chance==null?"":` Chance de vitória de ${curto(a)}: ${a.chance>0.99?"mais de 99%":a.chance<0.01?"menos de 1%":pct(a.chance,0)}.`;
+  return `${curto(a)} ${pct(a.proj)} × ${curto(b)} ${pct(b.proj)} (margem de ${fx}).${ch}`;
+}
 function itemTicker(it){
+  if (it.prj){ const m=textoProj(); if(!m) return null; it={k:"proj", t:D.atualizado, txt:m}; }
   if (it.uf){   // parcial de um estado, montada na hora com os dados mais recentes
     const u=(D.ufs||[]).find(x=>x.uf===it.uf); if(!u) return null;
     const [e,d]=lados(), pe=u.c[e.n]||0, pd=u.c[d.n]||0, t=(pe+pd)||1, curto=c=>c.nome.split(" ")[0];
@@ -554,7 +565,8 @@ function itemTicker(it){
 function desenharTicker(){
   const tk=document.getElementById("ticker"), tr=document.getElementById("trilho");
   const F=[...(D.feed||[])].reverse();                       // cronológico: mais antigo primeiro
-  tk.hidden=!F.length; if(!F.length) return;
+  const temProj=!!textoProj();
+  tk.hidden=!F.length&&!temProj; if(tk.hidden) return;
   const chave=x=>x.t+"|"+x.txt;
   const primeira=!TK.vistos.size;
   F.forEach(it=>{ const k=chave(it); if(!TK.vistos.has(k)){ TK.vistos.add(k); if(!primeira) TK.fila.push(it); } });
@@ -563,8 +575,13 @@ function desenharTicker(){
   const com=F.slice(-6), ciclo=[]; let k=0;
   com.forEach(c=>{ ciclo.push(c); for(let j=0;j<4&&k<ufs.length;j++) ciclo.push(ufs[k++]); });
   while(k<ufs.length) ciclo.push(ufs[k++]);
+  if (temProj){
+    // a projeção abre o ciclo e aparece de novo a cada atualização dos dados (cerca de 1 por minuto)
+    ciclo.unshift({prj:true});
+    if (TK.ultProj!==D.gerado_em){ TK.ultProj=D.gerado_em; if(!primeira) TK.fila.push({prj:true}); }
+  }
   TK.recentes=ciclo;
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ tr.replaceChildren(itemTicker(F[F.length-1])); return; }
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ const ul=temProj?{prj:true}:F[F.length-1]; tr.replaceChildren(itemTicker(ul)); return; }
   if (!TK.ativo){ TK.ativo=true; TK.ciclo=0; TK.x=tk.clientWidth;   // começa entrando pela direita
     tr.style.animation="none"; tk.addEventListener("pointerenter",()=>TK.pausa=true); tk.addEventListener("pointerleave",()=>TK.pausa=false);
     requestAnimationFrame(passoTicker); }
